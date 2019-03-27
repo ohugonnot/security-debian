@@ -240,12 +240,12 @@ sudo apt-get install --reinstall $(dpkg-query -S $(sudo debsums -c 2>&1 | sed -e
 
 ### Add a legal banner to /etc/issue, to warn unauthorized users [BANN-7126] 
 ```shell
-echo "Serveur manage par Folken, les indesirables ne sont pas les bievenues ici." > /etc/issue
+echo "Serveur managed by Folken with love, les indesirables ne sont pas les bienvenus ici." > /etc/issue
 ```
 
 ### Add legal banner to /etc/issue.net, to warn unauthorized users [BANN-7130] 
 ```shell
-echo "Serveur manage par Folken, les indesirables ne sont pas les bievenues ici." > /etc/issue.net
+echo "Serveur managed by Folken with love, les indesirables ne sont pas les bienvenus ici." > /etc/issue.net
 ```
 
 ### Surveiller les users
