@@ -1,0 +1,182 @@
+[INCLUDES]
+before = paths-debian.conf
+
+[DEFAULT]
+ignoreip = 127.0.0.1/8
+destemail = folken70@hotmail.com
+sender = root@localhost
+
+[phpmyadmin]
+enabled = true
+port = http,https
+filter = phpmyadmin
+action = iptables-multiport[name=PHPMYADMIN, port="http,https", protocol=tcp]
+logpath = /var/log/apache2/access.log
+bantime = 10000
+findtime = 1000
+maxretry = 2
+
+[scan-mysql]
+enabled = true
+port  = 3306
+maxretry = 2
+filter = scan-mysql
+logpath = /var/log/messages
+bantime = 10000
+findtime = 1000
+banaction = iptables-allports
+
+[sshd]
+enabled = true
+port    = 666
+logpath = %(sshd_log)s
+backend = %(sshd_backend)s
+
+[sshd-ddos]
+enabled = true
+port    = 666
+logpath = %(sshd_log)s
+backend = %(sshd_backend)s
+
+[apache-auth]
+enabled = true
+port     = http,https
+logpath  = %(apache_error_log)s
+
+[apache-badbots]
+enabled = true
+port     = http,https
+logpath  = %(apache_access_log)s
+bantime  = 172800
+maxretry = 1
+
+[apache-noscript]
+enabled = true
+port     = http,https
+logpath  = %(apache_error_log)s
+[apache-overflows]
+port     = http,https
+logpath  = %(apache_error_log)s
+maxretry = 2
+
+[apache-nohome]
+enabled = true
+port     = http,https
+logpath  = %(apache_error_log)s
+maxretry = 2
+
+[apache-botsearch]
+enabled = true
+port     = http,https
+logpath  = %(apache_error_log)s
+maxretry = 2
+
+[apache-fakegooglebot]
+enabled = true
+port     = http,https
+logpath  = %(apache_access_log)s
+maxretry = 1
+ignorecommand = %(ignorecommands_dir)s/apache-fakegooglebot <ip>
+
+[apache-modsecurity]
+enabled = true
+port     = http,https
+logpath  = %(apache_error_log)s
+maxretry = 2
+
+[apache-shellshock]
+enabled = true
+port    = http,https
+logpath = %(apache_error_log)s
+maxretry = 1
+
+[nginx-http-auth]
+port    = http,https
+logpath = %(nginx_error_log)s
+[nginx-limit-req]
+port    = http,https
+logpath = %(nginx_error_log)s
+
+[nginx-botsearch]
+port     = http,https
+logpath  = %(nginx_error_log)s
+maxretry = 2
+
+[php-url-fopen]
+enabled = true
+port    = http,https
+logpath = %(nginx_access_log)s
+          %(apache_access_log)s
+
+[webmin-auth]
+port    = 10000
+logpath = %(syslog_authpriv)s
+backend = %(syslog_backend)s
+
+[proftpd]
+port     = ftp,ftp-data,ftps,ftps-data
+logpath  = %(proftpd_log)s
+backend  = %(proftpd_backend)s
+
+[pure-ftpd]
+port     = ftp,ftp-data,ftps,ftps-data
+logpath  = %(pureftpd_log)s
+backend  = %(pureftpd_backend)s
+
+[postfix]
+enabled = true
+port     = smtp,465,submission
+logpath  = %(postfix_log)s
+backend  = %(postfix_backend)s
+
+[postfix-rbl]
+enabled = true
+port     = smtp,465,submission
+logpath  = %(postfix_log)s
+backend  = %(postfix_backend)s
+maxretry = 1
+
+[sendmail-auth]
+port    = submission,465,smtp
+logpath = %(syslog_mail)s
+backend = %(syslog_backend)s
+
+[sendmail-reject]
+port     = smtp,465,submission
+logpath  = %(syslog_mail)s
+backend  = %(syslog_backend)s
+
+[courier-auth]
+port     = smtp,465,submission,imap3,imaps,pop3,pop3s
+logpath  = %(syslog_mail)s
+backend  = %(syslog_backend)s
+
+[postfix-sasl]
+enabled = true
+port     = smtp,465,submission,imap3,imaps,pop3,pop3s
+logpath  = %(postfix_log)s
+backend  = %(postfix_backend)s
+
+[mysqld-auth]
+enabled = true
+port     = 3306
+logpath  = %(mysql_log)s
+backend  = %(mysql_backend)s
+
+[recidive]
+enabled = true
+logpath  = /var/log/fail2ban.log
+banaction = %(banaction_allports)s
+bantime  = 604800  ; 1 week
+findtime = 86400   ; 1 day
+
+[pass2allow-ftp]
+port         = ftp,ftp-data,ftps,ftps-data
+knocking_url = /knocking/
+filter       = apache-pass[knocking_url="%(knocking_url)s"]
+logpath      = %(apache_access_log)s
+blocktype    = RETURN
+returntype   = DROP
+bantime      = 3600
+maxretry     = 1
+findtime     = 1
