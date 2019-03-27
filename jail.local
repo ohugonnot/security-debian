@@ -12,8 +12,9 @@ port = http,https
 filter = phpmyadmin
 action = iptables-multiport[name=PHPMYADMIN, port="http,https", protocol=tcp]
 logpath = /var/log/apache2/access.log
+          /var/log/apache2/other_vhosts_access.log
 bantime = 10000
-findtime = 1000
+findtime = 3600
 maxretry = 2
 
 [scan-mysql]
@@ -23,7 +24,7 @@ maxretry = 2
 filter = scan-mysql
 logpath = /var/log/messages
 bantime = 10000
-findtime = 1000
+findtime = 3600
 banaction = iptables-allports
 
 [sshd]
