@@ -31,6 +31,30 @@ sudo sed -i 's/Alias .*/Alias \/bdd \/usr\/share\/phpmyadmin/g' /etc/phpmyadmin/
 sudo service apache2 restart
 ```
 
+### Apache 2 module anti DDOS
+```shell
+apt-get install -y apache2-utils libapache2-mod-evasive
+cat << EOT > /etc/apache2/mods-enabled/evasive.conf
+<IfModule mod_evasive20.c>
+DOSHashTableSize 3097
+DOSPageCount 2
+DOSSiteCount 50
+DOSPageInterval 1
+DOSSiteInterval 1
+DOSBlockingPeriod 10
+DOSEmailNotify folken70@hotmail.com
+DOSLogDir "/var/log/apache2/"
+</IfModule>
+EOT
+sudo systemctl reload apache2
+```
+
+### Apache 2 mode security
+```shell
+sudo apt install -y libapache2-modsecurity
+sudo service apache2 restart
+```
+
 ### Secure SUDO
 ```shell
 sudo chmod 710 /etc/sudoers.d/
@@ -214,38 +238,14 @@ sudo apt-get install -y debsums
 sudo apt-get install --reinstall $(dpkg-query -S $(sudo debsums -c 2>&1 | sed -e "s/.*file \(.*\) (.*/\1/g") | cut -d: -f1 | sort -u)
 ```
 
-### Apache 2 module anti DDOS
-```shell
-apt-get install -y apache2-utils libapache2-mod-evasive
-cat << EOT > /etc/apache2/mods-enabled/evasive.conf
-<IfModule mod_evasive20.c>
-DOSHashTableSize 3097
-DOSPageCount 2
-DOSSiteCount 50
-DOSPageInterval 1
-DOSSiteInterval 1
-DOSBlockingPeriod 10
-DOSEmailNotify folken70@hotmail.com
-DOSLogDir "/var/log/apache2/"
-</IfModule>
-EOT
-sudo systemctl reload apache2
-```
-
-## Add a legal banner to /etc/issue, to warn unauthorized users [BANN-7126] 
+### Add a legal banner to /etc/issue, to warn unauthorized users [BANN-7126] 
 ```shell
 echo "Serveur manage par Folken, les indesirables ne sont pas les bievenues ici." > /etc/issue
 ```
 
-## Add legal banner to /etc/issue.net, to warn unauthorized users [BANN-7130] 
+### Add legal banner to /etc/issue.net, to warn unauthorized users [BANN-7130] 
 ```shell
 echo "Serveur manage par Folken, les indesirables ne sont pas les bievenues ici." > /etc/issue.net
-```
-
-### Apache 2 mode security
-```shell
-sudo apt install -y libapache2-modsecurity
-sudo service apache2 restart
 ```
 
 ### Surveiller les users
@@ -256,7 +256,7 @@ sudo accton /var/log/pacct
 sudo /etc/init.d/acct start
 ```
 
-## Enable sysstat to collect accounting (no results) [ACCT-9626] 
+### Enable sysstat to collect accounting (no results) [ACCT-9626] 
 ```shell
 sudo apt-get install -y sysstat
 sudo sed -i 's/ENABLED="false"/ENABLED="true"/' /etc/default/sysstat
