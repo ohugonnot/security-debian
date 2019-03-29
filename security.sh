@@ -104,7 +104,45 @@ sudo sed -i 's/#\?expose_php.*/expose_php = Off/g' /etc/php/*/*/php.ini
 sudo sed -i 's/#\?allow_url_fopen.*/allow_url_fopen = Off/g' /etc/php/*/*/php.ini
 
 ### Installer et configurer le firewall
-sudo apt install -y ufw
+sudo apt install -y ufw iptables
+sudo iptables -A INPUT -m state --state INVALID -j DROP
+# paquet avec SYN et FIN à la fois
+sudo iptables -A PREROUTING -p tcp -m tcp --tcp-flags FIN,SYN FIN,SYN -j DROP
+# paquet avec SYN et RST à la fois
+sudo iptables -A PREROUTING -p tcp -m tcp --tcp-flags SYN,RST SYN,RST -j DROP
+# paquet avec FIN et RST à la fois
+sudo iptables -A PREROUTING -p tcp -m tcp --tcp-flags FIN,RST FIN,RST -j DROP
+# paquet avec FIN mais sans ACK
+sudo iptables -A PREROUTING -p tcp -m tcp --tcp-flags FIN,ACK FIN -j DROP
+# paquet avec URG mais sans ACK
+sudo iptables -A PREROUTING -p tcp -m tcp --tcp-flags ACK,URG URG -j DROP
+# paquet avec PSH mais sans ACK
+sudo iptables -A PREROUTING -p tcp -m tcp --tcp-flags PSH,ACK PSH -j DROP
+# paquet avec tous les flags à 1 <=> XMAS scan dans Nmap
+sudo iptables -A PREROUTING -p tcp -m tcp --tcp-flags FIN,SYN,RST,PSH,ACK,URG FIN,SYN,RST,PSH,ACK,URG -j DROP
+# paquet avec tous les flags à 0 <=> Null scan dans Nmap
+sudo iptables -A PREROUTING -p tcp -m tcp --tcp-flags FIN,SYN,RST,PSH,ACK,URG NONE -j DROP
+# paquet avec FIN,PSH, et URG mais sans SYN, RST ou ACK
+sudo iptables -A PREROUTING -p tcp -m tcp --tcp-flags FIN,SYN,RST,PSH,ACK,URG FIN,PSH,URG -j DROP
+# paquet avec FIN,SYN,PSH,URG mais sans ACK ou RST
+sudo iptables -A PREROUTING -p tcp -m tcp --tcp-flags FIN,SYN,RST,PSH,ACK,URG FIN,SYN,PSH,URG -j DROP
+# paquet avec FIN,SYN,RST,ACK,URG à 1 mais pas PSH
+sudo iptables -A PREROUTING -p tcp -m tcp --tcp-flags FIN,SYN,RST,PSH,ACK,URG FIN,SYN,RST,ACK,URG -j DROP
+# 1. en -t raw, les paquets TCP avec le flag SYN à destination des ports 22,80 ou 443 ne seront pas suivi par le connexion tracker (et donc traités plus rapidement)
+sudo iptables -A PREROUTING -i eth0 -p tcp -m multiport --dports 22,80,443 -m tcp --tcp-flags FIN,SYN,RST,ACK SYN -j CT --notrack
+# 2. en input-filter, les paquets TCP avec le flag SYN à destination des ports 22,80 ou 443 non suivi (UNTRACKED ou INVALID) et les fais suivre à SYNPROXY.
+# C'est à ce moment que synproxy répond le SYN-ACK à l'émeteur du SYN et créer une connexion à l'état ESTABLISHED dans conntrack, si et seulement si l'émetteur retourne un ACK valide.
+# Note : Les paquets avec un tcp-cookie invalides sont dropés, mais pas ceux avec des flags non-standard, il faudra les filtrer par ailleurs. 
+sudo iptables -A INPUT -i eth0 -p tcp -m multiport --dports 22,80,443 -m tcp -m state --state INVALID,UNTRACKED -j SYNPROXY --sack-perm --timestamp --wscale 7 --mss 1460
+# 3. en input-filter, la règles SYNPROXY doit être suivi de celle-ci pour rejeter les paquets restant en état INVALID.
+sudo iptables -A INPUT -i eth0 -p tcp -m multiport --dports 22,80,443 -m tcp -m state --state INVALID -j DROP
+
+sudo iptables -A INPUT -m recent --rcheck --seconds 86400 --name portscan --mask 255.255.255.255 --rsource -j DROP
+sudo iptables -A INPUT -m recent --remove --name portscan --mask 255.255.255.255 --rsource
+sudo iptables -A INPUT -p tcp -m multiport --dports 25,445,1433,3389 -m recent --set --name portscan --mask 255.255.255.255 --rsource -j DROP
+sudo iptables -A PREROUTING -f -j DROP
+sudo iptables -A PREROUTING -i eth0 -p tcp -m tcp --syn -m multiport --dports 22,80,443 -m hashlimit --hashlimit-above 200/sec --hashlimit-burst 1000 --hashlimit-mode srcip --hashlimit-name syn --hashlimit-htable-size 2097152 --hashlimit-srcmask 24 -j DROP
+sudo iptables -A INPUT -i eth0 -p tcp -m connlimit --connlimit-above 100 -j REJECT
 sudo ufw logging off
 sudo ufw default allow incoming comment 
 sudo ufw default allow outgoing comment 
@@ -132,9 +170,8 @@ sudo ufw allow https comment 'allow HTTPS traffic'
 sudo ufw allow ftp comment 'allow FTP traffic'
 sudo ufw allow 123/udp comment 'allow npd'
 sudo ufw allow 666/tcp comment 'allow ssh devil'
-
-sudo sed -i 's/^COMMIT.*/-A INPUT -j LOG --log-tcp-options --log-prefix "[IPTABLES] "\n-A FORWARD -j LOG --log-tcp-options --log-prefix "[IPTABLES] "\nCOMMIT/g' /etc/ufw/before.rules
-sudo sed -i 's/^COMMIT.*/-A INPUT -j LOG --log-tcp-options --log-prefix "[IPTABLES] "\n-A FORWARD -j LOG --log-tcp-options --log-prefix "[IPTABLES] "\nCOMMIT/g' /etc/ufw/before6.rules
+sudo iptables -A INPUT -j LOG --log-tcp-options --log-prefix "[IPTABLES] "
+sudo iptables -A FORWARD -j LOG --log-tcp-options --log-prefix "[IPTABLES] "
 
 sudo ufw reload
 
@@ -147,11 +184,12 @@ sudo sed -i "s/HOSTNAME .*/HOSTNAME             $HOSTNAME;/g" /etc/psad/psad.con
 sudo sed -i "s/ENABLE_AUTO_IDS .*/ENABLE_AUTO_IDS             Y;/g" /etc/psad/psad.conf
 sudo sed -i "s/ENABLE_AUTO_IDS_EMAILS .*/ENABLE_AUTO_IDS_EMAILS             Y;/g" /etc/psad/psad.
 sudo sed -i "s/IPTABLES_BLOCK_METHOD .*/IPTABLES_BLOCK_METHOD             Y;/g" /etc/psad/psad.conf
-sudo sed -i "s/IMPORT_OLD_SCANS .*/IMPORT_OLD_SCANS             Y;/g" /etc/psad/psad.conf
+#sudo sed -i "s/IMPORT_OLD_SCANS .*/IMPORT_OLD_SCANS             Y;/g" /etc/psad/psad.conf
 sudo sed -i "s/EXPECT_TCP_OPTIONS .*/EXPECT_TCP_OPTIONS             Y;/g" /etc/psad/psad.conf
 sudo sed -i "s/AUTO_IDS_DANGER_LEVEL .*/AUTO_IDS_DANGER_LEVEL       1;/g" /etc/psad/psad.conf
 sudo sed -i "s/EMAIL_ALERT_DANGER_LEVEL .*/EMAIL_ALERT_DANGER_LEVEL       3;/g" /etc/psad/psad.conf
 sudo sed -i "s/AUTO_BLOCK_TIMEOUT .*/AUTO_BLOCK_TIMEOUT       600000;/g" /etc/psad/psad.conf
+sudo sed -i "s/IPT_SYSLOG_FILE .*/IPT_SYSLOG_FILE        /var/log/syslog;/g" /etc/psad/psad.conf
 
 sudo psad -R
 sudo psad --sig-update
@@ -231,3 +269,10 @@ sudo aide.wrapper --init
 sudo aide.wrapper --check
 ## pour accepter des changement
 sudo aide.wrapper --update
+
+### Rkhunter anti rootkit
+sudo apt-get install -y rkhunter
+sudo sed -i "s/#\?MAIL-ON-WARNING.*/MAIL-ON-WARNING=folken70@hotmail.com/g" /etc/rkhunter.conf
+sudo service ssh restart
+sudo rkhunter --propupdate
+rkhunter -c --sk --display-logfile 
