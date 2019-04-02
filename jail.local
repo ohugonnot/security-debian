@@ -24,6 +24,7 @@ maxretry = 2
 filter = scan-mysql
 logpath = /var/log/syslog*
           /var/log/messages*
+          /var/log/kern*
 findtime = 1h
 bantime = 1w
 action = scan
@@ -32,7 +33,11 @@ action = scan
 enabled = true
 port    = 666
 logpath = %(sshd_log)s
-backend = %(sshd_backend)s
+
+[sshd-ddos]
+enabled = true
+port    = 666
+logpath = %(sshd_log)s
 
 [apache-auth]
 enabled = true
