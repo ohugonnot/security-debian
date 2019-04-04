@@ -27,6 +27,10 @@ nameserver 8.8.8.8
 nameserver 8.8.4.4
 EOT
 
+### installer la lib pour encrypter 
+sudo apt install -y gnupg
+sudo gpg --full-generate-key
+
 ### Modifier la config du serveur SSHD
 sudo cp --preserve /etc/ssh/sshd_config /etc/ssh/sshd_config.$(date +"%Y%m%d%H%M%S")
 sudo cat sshd_config | sudo cat - /etc/ssh/sshd_config > temp && sudo mv temp /etc/ssh/sshd_config
