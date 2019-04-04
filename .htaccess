@@ -1,0 +1,132 @@
+# Désactiver l'affichage du contenu des répertoires
+Options All -Indexes
+IndexIgnore *
+Options -MultiViews
+
+# Masquer les informations du serveur
+ServerSignature Off
+
+# Activation du suivi des liens symboliques
+Options +FollowSymLinks
+
+# Choix du fuseau horaire
+SetEnv TZ Europe/Paris
+
+# Encodage par défaut des fichiers textes et HTML
+AddDefaultCharset UTF-8
+
+<files conf.inc.php>
+    order allow,deny
+    deny from all
+</files>
+
+# Protéger les fichiers .htaccess et .htpasswds
+<Files ~ "^.*\.([Hh][Tt][AaPp])">
+order allow,deny
+deny from all
+satisfy all
+</Files>
+
+# Forcer le téléchargement pour ces types de fichiers
+AddType application/octet-stream .doc .docx .xls .xlsx .csv .mp3 .mp4
+
+# Mise en cache des fichiers dans le navigateur
+<IfModule mod_expires.c>
+    ExpiresActive On
+    ExpiresDefault "access plus 1 month"
+
+    ExpiresByType text/html "access plus 0 seconds"
+    ExpiresByType text/xml "access plus 0 seconds"
+    ExpiresByType application/xml "access plus 0 seconds"
+    ExpiresByType application/json "access plus 0 seconds"
+    ExpiresByType application/pdf "access plus 0 seconds"
+
+    ExpiresByType application/rss+xml "access plus 1 hour"
+    ExpiresByType application/atom+xml "access plus 1 hour"
+
+    ExpiresByType application/x-font-ttf "access plus 1 month"
+    ExpiresByType font/opentype "access plus 1 month"
+    ExpiresByType application/x-font-woff "access plus 1 month"
+    ExpiresByType application/x-font-woff2 "access plus 1 month"
+    ExpiresByType image/svg+xml "access plus 1 month"
+    ExpiresByType application/vnd.ms-fontobject "access plus 1 month"
+
+    ExpiresByType image/jpg "access plus 1 month"
+    ExpiresByType image/jpeg "access plus 1 month"
+    ExpiresByType image/gif "access plus 1 month"
+    ExpiresByType image/png "access plus 1 month"
+
+    ExpiresByType video/ogg "access plus 1 month"
+    ExpiresByType audio/ogg "access plus 1 month"
+    ExpiresByType video/mp4 "access plus 1 month"
+    ExpiresByType video/webm "access plus 1 month"
+
+    ExpiresByType text/css "access plus 6 month"
+    ExpiresByType application/javascript "access plus 6 month"
+
+    ExpiresByType application/x-shockwave-flash "access plus 1 week"
+    ExpiresByType image/x-icon "access plus 1 week"
+
+</IfModule>
+
+# En-têtes
+Header unset ETag
+FileETag None
+
+<ifModule mod_headers.c>
+    <filesMatch "\.(ico|jpe?g|png|gif|swf)$">
+    Header set Cache-Control "public"
+    </filesMatch>
+    <filesMatch "\.(css)$">
+    Header set Cache-Control "public"
+    </filesMatch>
+    <filesMatch "\.(js)$">
+    Header set Cache-Control "private"
+    </filesMatch>
+    <filesMatch "\.(x?html?|php)$">
+    Header set Cache-Control "private, must-revalidate"
+    </filesMatch>
+</ifModule>
+
+# Compressions des fichiers statiques
+<IfModule mod_deflate.c>
+    AddOutputFilterByType DEFLATE text/xhtml text/html text/plain text/xml text/javascript application/x-javascript text/css
+    BrowserMatch ^Mozilla/4 gzip-only-text/html
+    BrowserMatch ^Mozilla/4\.0[678] no-gzip
+    BrowserMatch \bMSIE !no-gzip !gzip-only-text/html
+    SetEnvIfNoCase Request_URI \.(?:gif|jpe?g|png)$ no-gzip dont-vary
+    Header append Vary User-Agent env=!dont-vary
+</IfModule>
+
+AddOutputFilterByType DEFLATE text/html
+AddOutputFilterByType DEFLATE text/plain
+AddOutputFilterByType DEFLATE text/xml
+AddOutputFilterByType DEFLATE text/css
+AddOutputFilterByType DEFLATE text/javascript
+AddOutputFilterByType DEFLATE font/opentype
+AddOutputFilterByType DEFLATE application/rss+xml
+AddOutputFilterByType DEFLATE application/javascript
+AddOutputFilterByType DEFLATE application/json
+
+# Protection contre les injections de fichiers
+RewriteEngine On
+RewriteCond %{REQUEST_METHOD} GET
+RewriteCond %{QUERY_STRING} [a-zA-Z0-9_]=http:// [OR]
+RewriteCond %{QUERY_STRING} [a-zA-Z0-9_]=(\.\.//?)+ [OR]
+RewriteCond %{QUERY_STRING} [a-zA-Z0-9_]=/([a-z0-9_.]//?)+ [NC]
+RewriteRule .* - [F]
+
+# Protections diverses (XSS, clickjacking et MIME-Type sniffing)
+#<ifModule mod_headers.c>
+#Header set X-XSS-Protection "1; mode=block"
+#Header always append X-Frame-Options SAMEORIGIN
+#Header set X-Content-Type-Options: "nosniff”
+#</ifModule>
+
+# Enable fonts loading from cross-origin recourse
+Header add Access-Control-Allow-Origin "*"
+
+# Disable browsers from being able to validate files, to improve speed
+Header unset ETag
+FileETag None
+# End of Disable browsers from being able to validate files
