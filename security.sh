@@ -87,8 +87,8 @@ apt-get install -y apache2-utils libapache2-mod-evasive
 cat << EOT > /etc/apache2/mods-enabled/evasive.conf
 <IfModule mod_evasive20.c>
 DOSHashTableSize 3097
-DOSPageCount 2
-DOSSiteCount 50
+DOSPageCount 20
+DOSSiteCount 100
 DOSPageInterval 1
 DOSSiteInterval 1
 DOSBlockingPeriod 10
