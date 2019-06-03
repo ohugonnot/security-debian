@@ -1,3 +1,6 @@
+### Optimisation des disks
+https://unix.stackexchange.com/questions/30286/can-i-configure-my-linux-system-for-more-aggressive-file-system-caching
+
 ### Avoir les bon repo stretch
 ```shell
 cat << EOT > /etc/apt/sources.list
