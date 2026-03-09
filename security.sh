@@ -1,33 +1,33 @@
 #!/bin/bash
 
-### Avoir les bon repo stretch
+### Avoir les bons repos Bookworm
 cat << EOT > /etc/apt/sources.list
-deb http://deb.debian.org/debian stretch main contrib non-free
-deb-src http://deb.debian.org/debian stretch main contrib non-free
+deb http://deb.debian.org/debian bookworm main contrib non-free non-free-firmware
+deb-src http://deb.debian.org/debian bookworm main contrib non-free non-free-firmware
 
-deb http://deb.debian.org/debian-security/ stretch/updates main contrib non-free
-deb-src http://deb.debian.org/debian-security/ stretch/updates main contrib non-free
+deb http://deb.debian.org/debian-security/ bookworm-security main contrib non-free
+deb-src http://deb.debian.org/debian-security/ bookworm-security main contrib non-free
 
-deb http://deb.debian.org/debian stretch-updates main contrib non-free
-deb-src http://deb.debian.org/debian stretch-updates main contrib non-free
+deb http://deb.debian.org/debian bookworm-updates main contrib non-free non-free-firmware
+deb-src http://deb.debian.org/debian bookworm-updates main contrib non-free non-free-firmware
 
 # Decommenter pour la dernière version de PHP et signé
-# deb https://packages.sury.org/php/ stretch main
+# deb https://packages.sury.org/php/ bookworm main
 EOT
 
 ### Secure SUDO
 sudo chmod 710 /etc/sudoers.d/
 
-### Install package apt-show-versions for patch management purposes [PKGS-7394] 
-apt-get install -y apt-show-versions 
- 
-### Replace DNS by GOOGLE dns (scaleway online dns are fucking shit)
+### Install package apt-show-versions for patch management purposes [PKGS-7394]
+apt-get install -y apt-show-versions
+
+### Replace DNS by GOOGLE dns
 cat <<EOT > /etc/resolv.conf
 nameserver 8.8.8.8
 nameserver 8.8.4.4
 EOT
 
-### installer la lib pour encrypter 
+### installer la lib pour encrypter
 sudo apt install -y gnupg
 sudo gpg --full-generate-key
 
@@ -38,11 +38,10 @@ sudo sed -i 's/#\?Port .*/Port 666/g' /etc/ssh/sshd_config
 sudo sed -i 's/#\?PermitRootLogin .*/PermitRootLogin prohibit-password/g' /etc/ssh/sshd_config
 sudo sed -i 's/#\?PasswordAuthentication .*/PasswordAuthentication yes/g' /etc/ssh/sshd_config
 sudo sed -i 's/#\?ClientAliveCountMax .*/ClientAliveCountMax 2/g' /etc/ssh/sshd_config
-## Consider hardening of SSH configuration [SSH-7408] 
+## Consider hardening of SSH configuration [SSH-7408]
 sudo sed -i "s/#\?LogLevel .*/LogLevel VERBOSE/g" /etc/ssh/sshd_config
 sudo sed -i "s/#\?TCPKeepAlive .*/TCPKeepAlive no/g" /etc/ssh/sshd_config
 sudo sed -i "s/#\?X11Forwarding .*/X11Forwarding no/g" /etc/ssh/sshd_config
-sudo sed -i "s/#\?UsePrivilegeSeparation .*/UsePrivilegeSeparation sandbox/g" /etc/ssh/sshd_config
 sudo service ssh restart
 sudo service sshd restart
 
@@ -51,19 +50,19 @@ sudo cp --preserve /etc/ssh/moduli /etc/ssh/moduli.$(date +"%Y%m%d%H%M%S")
 sudo awk '$5 >= 3071' /etc/ssh/moduli | sudo tee /etc/ssh/moduli.tmp
 sudo mv /etc/ssh/moduli.tmp /etc/ssh/moduli
 
-### Installer NTP et lui donner une règle de pool
-sudo apt install -y ntp
-sudo cp --preserve /etc/ntp.conf /etc/ntp.conf.$(date +"%Y%m%d%H%M%S")
-sudo sed -i -r -e "s/^((server|pool).*)/# \1         # commented by $(whoami) on $(date +"%Y-%m-%d @ %H:%M:%S")/" /etc/ntp.conf
-echo -e "\npool pool.ntp.org iburst         # added by $(whoami) on $(date +"%Y-%m-%d @ %H:%M:%S")" | sudo tee -a /etc/ntp.conf
-sudo service ntp restart
+### Installer NTPsec et lui donner une règle de pool
+sudo apt install -y ntpsec
+sudo cp --preserve /etc/ntpsec/ntp.conf /etc/ntpsec/ntp.conf.$(date +"%Y%m%d%H%M%S")
+sudo sed -i -r -e "s/^((server|pool).*)/# \1         # commented by $(whoami) on $(date +"%Y-%m-%d @ %H:%M:%S")/" /etc/ntpsec/ntp.conf
+echo -e "\npool pool.ntp.org iburst         # added by $(whoami) on $(date +"%Y-%m-%d @ %H:%M:%S")" | sudo tee -a /etc/ntpsec/ntp.conf
+sudo service ntpsec restart
 
 ### Sécurisé le PROC
 sudo cp --preserve /etc/fstab /etc/fstab.$(date +"%Y%m%d%H%M%S")
-echo -e "\nproc     /proc     proc     defaults,hidepid=2     0     0         # added by $(whoami) on $(date +"%Y-%m-%d @ %H:%M:%S")" | sudo tee -a /etc/fstab
+echo -e "\nproc     /proc     proc     defaults,hidepid=2,gid=proc     0     0         # added by $(whoami) on $(date +"%Y-%m-%d @ %H:%M:%S")" | sudo tee -a /etc/fstab
 
 ### Imposer des mot de passes robustes
-sudo apt install -y libpam-pwquality 
+sudo apt install -y libpam-pwquality
 sudo cp --preserve /etc/pam.d/common-password /etc/pam.d/common-password.$(date +"%Y%m%d%H%M%S")
 sudo sed -i -r -e "s/^(password\s+requisite\s+pam_pwquality.so)(.*)$/# \1\2         # commented by $(whoami) on $(date +"%Y-%m-%d @ %H:%M:%S")\n\1 retry=3 minlen=10 difok=3 ucredit=-1 lcredit=-1 dcredit=-1 ocredit=-1 maxrepeat=3 gecoschec         # added by $(whoami) on $(date +"%Y-%m-%d @ %H:%M:%S")/" /etc/pam.d/common-password
 
@@ -71,9 +70,9 @@ sudo sed -i -r -e "s/^(password\s+requisite\s+pam_pwquality.so)(.*)$/# \1\2     
 ### Install PHP + Apache + MYSQL Server + PHPMYADMIN + certbot + composer
 sudo apt update
 sudo apt-get upgrade
-sudo apt install apache2 default-mysql-server sudo
+sudo apt install --no-install-recommends apache2 default-mysql-server sudo
 sudo mysql_secure_installation
-sudo apt install php7.2 libapache2-mod-php7.2 php7.2-mysql php7.2-curl php7.2-json php7.2-gd php7.2-intl php7.2-sqlite3 php7.2-gmp php7.2-mbstring php7.2-xml php7.2-zip php7.2-opcache php-apcu
+sudo apt install --no-install-recommends php8.2 libapache2-mod-php8.2 php8.2-mysql php8.2-curl php8.2-gd php8.2-intl php8.2-sqlite3 php8.2-gmp php8.2-mbstring php8.2-xml php8.2-zip php8.2-opcache php-apcu
 sudo a2enmod rewrite
 sudo apt install phpmyadmin
 sudo apt install certbot
@@ -83,7 +82,7 @@ sudo sed -i 's/Alias .*/Alias \/bdd \/usr\/share\/phpmyadmin/g' /etc/phpmyadmin/
 sudo service apache2 restart
 
 ### Apache 2 module anti DDOS
-apt-get install -y apache2-utils libapache2-mod-evasive
+apt-get install -y --no-install-recommends apache2-utils libapache2-mod-evasive
 cat << EOT > /etc/apache2/mods-enabled/evasive.conf
 <IfModule mod_evasive20.c>
 DOSHashTableSize 3097
@@ -92,14 +91,14 @@ DOSSiteCount 100
 DOSPageInterval 1
 DOSSiteInterval 1
 DOSBlockingPeriod 10
-DOSEmailNotify folken70@hotmail.com
+DOSEmailNotify YOUR_EMAIL
 DOSLogDir "/var/log/apache2/"
 </IfModule>
 EOT
 sudo systemctl reload apache2
 
 ### Apache 2 mode security
-sudo apt install -y libapache2-modsecurity
+sudo apt install -y libapache2-mod-security2
 sudo service apache2 restart
 
 ### Ne pas exposer PHP
@@ -136,7 +135,7 @@ sudo iptables -A PREROUTING -p tcp -m tcp --tcp-flags FIN,SYN,RST,PSH,ACK,URG FI
 sudo iptables -A PREROUTING -i eth0 -p tcp -m multiport --dports 22,80,443 -m tcp --tcp-flags FIN,SYN,RST,ACK SYN -j CT --notrack
 # 2. en input-filter, les paquets TCP avec le flag SYN à destination des ports 22,80 ou 443 non suivi (UNTRACKED ou INVALID) et les fais suivre à SYNPROXY.
 # C'est à ce moment que synproxy répond le SYN-ACK à l'émeteur du SYN et créer une connexion à l'état ESTABLISHED dans conntrack, si et seulement si l'émetteur retourne un ACK valide.
-# Note : Les paquets avec un tcp-cookie invalides sont dropés, mais pas ceux avec des flags non-standard, il faudra les filtrer par ailleurs. 
+# Note : Les paquets avec un tcp-cookie invalides sont dropés, mais pas ceux avec des flags non-standard, il faudra les filtrer par ailleurs.
 sudo iptables -A INPUT -i eth0 -p tcp -m multiport --dports 22,80,443 -m tcp -m state --state INVALID,UNTRACKED -j SYNPROXY --sack-perm --timestamp --wscale 7 --mss 1460
 # 3. en input-filter, la règles SYNPROXY doit être suivi de celle-ci pour rejeter les paquets restant en état INVALID.
 sudo iptables -A INPUT -i eth0 -p tcp -m multiport --dports 22,80,443 -m tcp -m state --state INVALID -j DROP
@@ -148,8 +147,8 @@ sudo iptables -A PREROUTING -f -j DROP
 sudo iptables -A PREROUTING -i eth0 -p tcp -m tcp --syn -m multiport --dports 22,80,443 -m hashlimit --hashlimit-above 200/sec --hashlimit-burst 1000 --hashlimit-mode srcip --hashlimit-name syn --hashlimit-htable-size 2097152 --hashlimit-srcmask 24 -j DROP
 sudo iptables -A INPUT -i eth0 -p tcp -m connlimit --connlimit-above 100 -j REJECT
 sudo ufw logging off
-sudo ufw default allow incoming comment 
-sudo ufw default allow outgoing comment 
+sudo ufw default allow incoming comment
+sudo ufw default allow outgoing comment
 sudo ufw enable
 
 sudo ufw default deny incoming comment 'deny all incoming traffic'
@@ -183,10 +182,10 @@ sudo ufw reload
 # PSAD
 sudo apt install -y psad
 sudo cp --preserve /etc/psad/psad.conf /etc/psad/psad.conf.$(date +"%Y%m%d%H%M%S")
-sudo sed -i 's/EMAIL_ADDRESSES .*/EMAIL_ADDRESSES             folken70@hotmail.com;/g' /etc/psad/psad.conf
+sudo sed -i 's/EMAIL_ADDRESSES .*/EMAIL_ADDRESSES             YOUR_EMAIL;/g' /etc/psad/psad.conf
 sudo sed -i "s/HOSTNAME .*/HOSTNAME             $HOSTNAME;/g" /etc/psad/psad.conf
 sudo sed -i "s/ENABLE_AUTO_IDS .*/ENABLE_AUTO_IDS             Y;/g" /etc/psad/psad.conf
-sudo sed -i "s/ENABLE_AUTO_IDS_EMAILS .*/ENABLE_AUTO_IDS_EMAILS             Y;/g" /etc/psad/psad.
+sudo sed -i "s/ENABLE_AUTO_IDS_EMAILS .*/ENABLE_AUTO_IDS_EMAILS             Y;/g" /etc/psad/psad.conf
 sudo sed -i "s/IPTABLES_BLOCK_METHOD .*/IPTABLES_BLOCK_METHOD             Y;/g" /etc/psad/psad.conf
 #sudo sed -i "s/IMPORT_OLD_SCANS .*/IMPORT_OLD_SCANS             Y;/g" /etc/psad/psad.conf
 sudo sed -i "s/EXPECT_TCP_OPTIONS .*/EXPECT_TCP_OPTIONS             Y;/g" /etc/psad/psad.conf
@@ -210,7 +209,7 @@ sudo fail2ban-client start
 sudo fail2ban-client reload
 
 ### Lynis
-sudo apt install -y git host kbtin
+sudo apt install -y git host
 sudo rm -rf /usr/local/lynis
 cd /usr/local/
 sudo git clone https://github.com/CISOfy/lynis
@@ -237,9 +236,9 @@ sudo apt-get install -y mailutils postfix
 sudo sed -i "s/inet_interfaces.*/inet_interfaces = loopback-only/g" /etc/postfix/main.cf
 sudo sed -i "s/smtpd_banner.*/smtpd_banner = $myhostname ESMTP/g" /etc/postfix/main.cf
 sudo systemctl restart postfix
-echo "This is the body of the email" | mail -s "This is the subject line" folken70@hotmail.com
+echo "This is the body of the email" | mail -s "This is the subject line" YOUR_EMAIL
 
-### Changer la sécurité des login en 023
+### Changer la sécurité des login en 027
 sudo sed -i "s/UMASK.*/UMASK           027/g" /etc/login.defs
 
 ### Purges les packets non utilisés
@@ -250,10 +249,10 @@ dpkg --list | grep "^rc" | cut -d " " -f 3 | xargs sudo dpkg --purge
 sudo apt-get install -y debsums
 sudo apt-get install --reinstall $(dpkg-query -S $(sudo debsums -c 2>&1 | sed -e "s/.*file \(.*\) (.*/\1/g") | cut -d: -f1 | sort -u)
 
-## Add a legal banner to /etc/issue, to warn unauthorized users [BANN-7126] 
+## Add a legal banner to /etc/issue, to warn unauthorized users [BANN-7126]
 echo "Serveur managed by Folken with love, les indesirables ne sont pas les bienvenus ici." > /etc/issue
- 
-## Add legal banner to /etc/issue.net, to warn unauthorized users [BANN-7130] 
+
+## Add legal banner to /etc/issue.net, to warn unauthorized users [BANN-7130]
 echo "Serveur managed by Folken with love, les indesirables ne sont pas les bienvenus ici." > /etc/issue.net
 
 ### Surveiller les users
@@ -262,21 +261,21 @@ sudo touch /var/log/pacct
 sudo accton /var/log/pacct
 sudo /etc/init.d/acct start
 
-## Enable sysstat to collect accounting (no results) [ACCT-9626] 
+## Enable sysstat to collect accounting (no results) [ACCT-9626]
 sudo apt-get install -y sysstat
 sudo sed -i 's/ENABLED="false"/ENABLED="true"/' /etc/default/sysstat
 
-### Aide for check integrity config file
-sudo apt-get -y aide
+### AIDE for check integrity config file
+sudo apt-get install -y aide
 sudo aide.wrapper --init
 ## pour tester l'integrité ensuite
 sudo aide.wrapper --check
-## pour accepter des changement
+## pour accepter des changements
 sudo aide.wrapper --update
 
 ### Rkhunter anti rootkit
 sudo apt-get install -y rkhunter
-sudo sed -i "s/#\?MAIL-ON-WARNING.*/MAIL-ON-WARNING=folken70@hotmail.com/g" /etc/rkhunter.conf
+sudo sed -i "s/#\?MAIL-ON-WARNING.*/MAIL-ON-WARNING=YOUR_EMAIL/g" /etc/rkhunter.conf
 sudo service ssh restart
 sudo rkhunter --propupdate
-rkhunter -c --sk --display-logfile 
+rkhunter -c --sk --display-logfile
