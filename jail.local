@@ -88,14 +88,17 @@ logpath = %(apache_error_log)s
 maxretry = 1
 
 [nginx-http-auth]
+enabled = false  # activer si nginx est utilisé à la place d'Apache
 port    = http,https
 logpath = %(nginx_error_log)s
 
 [nginx-limit-req]
+enabled = false  # activer si nginx est utilisé à la place d'Apache
 port    = http,https
 logpath = %(nginx_error_log)s
 
 [nginx-botsearch]
+enabled = false  # activer si nginx est utilisé à la place d'Apache
 port     = http,https
 logpath  = %(nginx_error_log)s
 maxretry = 2
@@ -134,21 +137,6 @@ port     = smtp,465,submission
 logpath  = %(postfix_log)s
 backend  = %(postfix_backend)s
 maxretry = 1
-
-[sendmail-auth]
-port    = submission,465,smtp
-logpath = %(syslog_mail)s
-backend = %(syslog_backend)s
-
-[sendmail-reject]
-port     = smtp,465,submission
-logpath  = %(syslog_mail)s
-backend  = %(syslog_backend)s
-
-[courier-auth]
-port     = smtp,465,submission,imap3,imaps,pop3,pop3s
-logpath  = %(syslog_mail)s
-backend  = %(syslog_backend)s
 
 [postfix-sasl]
 enabled = true
