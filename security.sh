@@ -23,7 +23,7 @@ deb-src http://deb.debian.org/debian bookworm-updates main contrib non-free non-
 EOT
 
 ### Secure SUDO
-sudo chmod 710 /etc/sudoers.d/
+chmod 710 /etc/sudoers.d/
 
 ### Install package apt-show-versions for patch management purposes [PKGS-7394]
 apt-get install -y apt-show-versions
@@ -35,58 +35,57 @@ nameserver 8.8.4.4
 EOT
 
 ### installer la lib pour encrypter
-sudo apt install -y gnupg
-sudo gpg --full-generate-key
+apt-get install -y gnupg
+gpg --full-generate-key
 
 ### Modifier la config du serveur SSHD
-sudo cp --preserve /etc/ssh/sshd_config /etc/ssh/sshd_config.$(date +"%Y%m%d%H%M%S")
-sudo cat sshd_config | sudo cat - /etc/ssh/sshd_config > temp && sudo mv temp /etc/ssh/sshd_config
-sudo sed -i 's/#\?Port .*/Port 666/g' /etc/ssh/sshd_config
-sudo sed -i 's/#\?PermitRootLogin .*/PermitRootLogin prohibit-password/g' /etc/ssh/sshd_config
-sudo sed -i 's/#\?PasswordAuthentication .*/PasswordAuthentication yes/g' /etc/ssh/sshd_config
-sudo sed -i 's/#\?ClientAliveCountMax .*/ClientAliveCountMax 2/g' /etc/ssh/sshd_config
+cp --preserve /etc/ssh/sshd_config /etc/ssh/sshd_config.$(date +"%Y%m%d%H%M%S")
+cat sshd_config | cat - /etc/ssh/sshd_config > temp && mv temp /etc/ssh/sshd_config
+sed -i 's/#\?Port .*/Port 666/g' /etc/ssh/sshd_config
+sed -i 's/#\?PermitRootLogin .*/PermitRootLogin prohibit-password/g' /etc/ssh/sshd_config
+sed -i 's/#\?ClientAliveCountMax .*/ClientAliveCountMax 2/g' /etc/ssh/sshd_config
 ## Consider hardening of SSH configuration [SSH-7408]
-sudo sed -i "s/#\?LogLevel .*/LogLevel VERBOSE/g" /etc/ssh/sshd_config
-sudo sed -i "s/#\?TCPKeepAlive .*/TCPKeepAlive no/g" /etc/ssh/sshd_config
-sudo sed -i "s/#\?X11Forwarding .*/X11Forwarding no/g" /etc/ssh/sshd_config
-sudo service ssh restart
-sudo service sshd restart
+sed -i "s/#\?LogLevel .*/LogLevel VERBOSE/g" /etc/ssh/sshd_config
+sed -i "s/#\?TCPKeepAlive .*/TCPKeepAlive no/g" /etc/ssh/sshd_config
+sed -i "s/#\?X11Forwarding .*/X11Forwarding no/g" /etc/ssh/sshd_config
+service ssh restart
+service sshd restart
 
 ### Augmenter la sécurité de l'encryptage SSH
-sudo cp --preserve /etc/ssh/moduli /etc/ssh/moduli.$(date +"%Y%m%d%H%M%S")
-sudo awk '$5 >= 3071' /etc/ssh/moduli | sudo tee /etc/ssh/moduli.tmp
-sudo mv /etc/ssh/moduli.tmp /etc/ssh/moduli
+cp --preserve /etc/ssh/moduli /etc/ssh/moduli.$(date +"%Y%m%d%H%M%S")
+awk '$5 >= 3071' /etc/ssh/moduli | tee /etc/ssh/moduli.tmp
+mv /etc/ssh/moduli.tmp /etc/ssh/moduli
 
 ### Installer NTPsec et lui donner une règle de pool
-sudo apt install -y ntpsec
-sudo cp --preserve /etc/ntpsec/ntp.conf /etc/ntpsec/ntp.conf.$(date +"%Y%m%d%H%M%S")
-sudo sed -i -r -e "s/^((server|pool).*)/# \1         # commented by $(whoami) on $(date +"%Y-%m-%d @ %H:%M:%S")/" /etc/ntpsec/ntp.conf
-echo -e "\npool pool.ntp.org iburst         # added by $(whoami) on $(date +"%Y-%m-%d @ %H:%M:%S")" | sudo tee -a /etc/ntpsec/ntp.conf
-sudo service ntpsec restart
+apt-get install -y ntpsec
+cp --preserve /etc/ntpsec/ntp.conf /etc/ntpsec/ntp.conf.$(date +"%Y%m%d%H%M%S")
+sed -i -r -e "s/^((server|pool).*)/# \1         # commented by $(whoami) on $(date +"%Y-%m-%d @ %H:%M:%S")/" /etc/ntpsec/ntp.conf
+echo -e "\npool pool.ntp.org iburst         # added by $(whoami) on $(date +"%Y-%m-%d @ %H:%M:%S")" | tee -a /etc/ntpsec/ntp.conf
+service ntpsec restart
 
 ### Sécurisé le PROC
-sudo cp --preserve /etc/fstab /etc/fstab.$(date +"%Y%m%d%H%M%S")
-echo -e "\nproc     /proc     proc     defaults,hidepid=2,gid=proc     0     0         # added by $(whoami) on $(date +"%Y-%m-%d @ %H:%M:%S")" | sudo tee -a /etc/fstab
+cp --preserve /etc/fstab /etc/fstab.$(date +"%Y%m%d%H%M%S")
+echo -e "\nproc     /proc     proc     defaults,hidepid=2,gid=proc     0     0         # added by $(whoami) on $(date +"%Y-%m-%d @ %H:%M:%S")" | tee -a /etc/fstab
 
 ### Imposer des mot de passes robustes
-sudo apt install -y libpam-pwquality
-sudo cp --preserve /etc/pam.d/common-password /etc/pam.d/common-password.$(date +"%Y%m%d%H%M%S")
-sudo sed -i -r -e "s/^(password\s+requisite\s+pam_pwquality.so)(.*)$/# \1\2         # commented by $(whoami) on $(date +"%Y-%m-%d @ %H:%M:%S")\n\1 retry=3 minlen=10 difok=3 ucredit=-1 lcredit=-1 dcredit=-1 ocredit=-1 maxrepeat=3 gecoschec         # added by $(whoami) on $(date +"%Y-%m-%d @ %H:%M:%S")/" /etc/pam.d/common-password
+apt-get install -y libpam-pwquality
+cp --preserve /etc/pam.d/common-password /etc/pam.d/common-password.$(date +"%Y%m%d%H%M%S")
+sed -i -r -e "s/^(password\s+requisite\s+pam_pwquality.so)(.*)$/# \1\2         # commented by $(whoami) on $(date +"%Y-%m-%d @ %H:%M:%S")\n\1 retry=3 minlen=10 difok=3 ucredit=-1 lcredit=-1 dcredit=-1 ocredit=-1 maxrepeat=3 gecoschec         # added by $(whoami) on $(date +"%Y-%m-%d @ %H:%M:%S")/" /etc/pam.d/common-password
 
 
 ### Install PHP + Apache + MYSQL Server + PHPMYADMIN + certbot + composer
-sudo apt update
-sudo apt-get upgrade
-sudo apt install --no-install-recommends apache2 default-mysql-server sudo
-sudo mysql_secure_installation
-sudo apt install --no-install-recommends php8.2 libapache2-mod-php8.2 php8.2-mysql php8.2-curl php8.2-gd php8.2-intl php8.2-sqlite3 php8.2-gmp php8.2-mbstring php8.2-xml php8.2-zip php8.2-opcache php-apcu
-sudo a2enmod rewrite
-sudo apt install phpmyadmin
-sudo apt install certbot
-sudo apt install composer
+apt-get update
+apt-get upgrade -y
+apt-get install --no-install-recommends apache2 default-mysql-server sudo
+mysql_secure_installation
+apt-get install --no-install-recommends php8.2 libapache2-mod-php8.2 php8.2-mysql php8.2-curl php8.2-gd php8.2-intl php8.2-sqlite3 php8.2-gmp php8.2-mbstring php8.2-xml php8.2-zip php8.2-opcache php-apcu
+a2enmod rewrite
+apt-get install phpmyadmin
+apt-get install certbot
+apt-get install composer
 ### Renommer le phpmyadmin pour eviter les scan et les tentatives de bruteforce
-sudo sed -i 's/Alias .*/Alias \/bdd \/usr\/share\/phpmyadmin/g' /etc/phpmyadmin/apache.conf
-sudo service apache2 restart
+sed -i 's/Alias .*/Alias \/bdd \/usr\/share\/phpmyadmin/g' /etc/phpmyadmin/apache.conf
+service apache2 restart
 
 ### Apache 2 module anti DDOS
 apt-get install -y --no-install-recommends apache2-utils libapache2-mod-evasive
@@ -102,125 +101,124 @@ DOSEmailNotify YOUR_EMAIL
 DOSLogDir "/var/log/apache2/"
 </IfModule>
 EOT
-sudo systemctl reload apache2
+systemctl reload apache2
 
 ### Apache 2 mode security
-sudo apt install -y libapache2-mod-security2
-sudo service apache2 restart
+apt-get install -y libapache2-mod-security2
+service apache2 restart
 
 ### Ne pas exposer PHP
-sudo sed -i 's/#\?expose_php.*/expose_php = Off/g' /etc/php/*/*/php.ini
+sed -i 's/#\?expose_php.*/expose_php = Off/g' /etc/php/*/*/php.ini
 ### disable downloads via PHP
-sudo sed -i 's/#\?allow_url_fopen.*/allow_url_fopen = Off/g' /etc/php/*/*/php.ini
+sed -i 's/#\?allow_url_fopen.*/allow_url_fopen = Off/g' /etc/php/*/*/php.ini
 
 ### Installer et configurer le firewall
-sudo apt install -y ufw iptables
-sudo iptables -A INPUT -m state --state INVALID -j DROP
+apt-get install -y ufw iptables
+iptables -A INPUT -m state --state INVALID -j DROP
 # paquet avec SYN et FIN à la fois
-sudo iptables -A PREROUTING -p tcp -m tcp --tcp-flags FIN,SYN FIN,SYN -j DROP
+iptables -A PREROUTING -p tcp -m tcp --tcp-flags FIN,SYN FIN,SYN -j DROP
 # paquet avec SYN et RST à la fois
-sudo iptables -A PREROUTING -p tcp -m tcp --tcp-flags SYN,RST SYN,RST -j DROP
+iptables -A PREROUTING -p tcp -m tcp --tcp-flags SYN,RST SYN,RST -j DROP
 # paquet avec FIN et RST à la fois
-sudo iptables -A PREROUTING -p tcp -m tcp --tcp-flags FIN,RST FIN,RST -j DROP
+iptables -A PREROUTING -p tcp -m tcp --tcp-flags FIN,RST FIN,RST -j DROP
 # paquet avec FIN mais sans ACK
-sudo iptables -A PREROUTING -p tcp -m tcp --tcp-flags FIN,ACK FIN -j DROP
+iptables -A PREROUTING -p tcp -m tcp --tcp-flags FIN,ACK FIN -j DROP
 # paquet avec URG mais sans ACK
-sudo iptables -A PREROUTING -p tcp -m tcp --tcp-flags ACK,URG URG -j DROP
+iptables -A PREROUTING -p tcp -m tcp --tcp-flags ACK,URG URG -j DROP
 # paquet avec PSH mais sans ACK
-sudo iptables -A PREROUTING -p tcp -m tcp --tcp-flags PSH,ACK PSH -j DROP
+iptables -A PREROUTING -p tcp -m tcp --tcp-flags PSH,ACK PSH -j DROP
 # paquet avec tous les flags à 1 <=> XMAS scan dans Nmap
-sudo iptables -A PREROUTING -p tcp -m tcp --tcp-flags FIN,SYN,RST,PSH,ACK,URG FIN,SYN,RST,PSH,ACK,URG -j DROP
+iptables -A PREROUTING -p tcp -m tcp --tcp-flags FIN,SYN,RST,PSH,ACK,URG FIN,SYN,RST,PSH,ACK,URG -j DROP
 # paquet avec tous les flags à 0 <=> Null scan dans Nmap
-sudo iptables -A PREROUTING -p tcp -m tcp --tcp-flags FIN,SYN,RST,PSH,ACK,URG NONE -j DROP
+iptables -A PREROUTING -p tcp -m tcp --tcp-flags FIN,SYN,RST,PSH,ACK,URG NONE -j DROP
 # paquet avec FIN,PSH, et URG mais sans SYN, RST ou ACK
-sudo iptables -A PREROUTING -p tcp -m tcp --tcp-flags FIN,SYN,RST,PSH,ACK,URG FIN,PSH,URG -j DROP
+iptables -A PREROUTING -p tcp -m tcp --tcp-flags FIN,SYN,RST,PSH,ACK,URG FIN,PSH,URG -j DROP
 # paquet avec FIN,SYN,PSH,URG mais sans ACK ou RST
-sudo iptables -A PREROUTING -p tcp -m tcp --tcp-flags FIN,SYN,RST,PSH,ACK,URG FIN,SYN,PSH,URG -j DROP
+iptables -A PREROUTING -p tcp -m tcp --tcp-flags FIN,SYN,RST,PSH,ACK,URG FIN,SYN,PSH,URG -j DROP
 # paquet avec FIN,SYN,RST,ACK,URG à 1 mais pas PSH
-sudo iptables -A PREROUTING -p tcp -m tcp --tcp-flags FIN,SYN,RST,PSH,ACK,URG FIN,SYN,RST,ACK,URG -j DROP
-# 1. en -t raw, les paquets TCP avec le flag SYN à destination des ports 22,80 ou 443 ne seront pas suivi par le connexion tracker (et donc traités plus rapidement)
-sudo iptables -A PREROUTING -i eth0 -p tcp -m multiport --dports 22,80,443 -m tcp --tcp-flags FIN,SYN,RST,ACK SYN -j CT --notrack
-# 2. en input-filter, les paquets TCP avec le flag SYN à destination des ports 22,80 ou 443 non suivi (UNTRACKED ou INVALID) et les fais suivre à SYNPROXY.
+iptables -A PREROUTING -p tcp -m tcp --tcp-flags FIN,SYN,RST,PSH,ACK,URG FIN,SYN,RST,ACK,URG -j DROP
+# 1. en -t raw, les paquets TCP avec le flag SYN à destination des ports 666,80 ou 443 ne seront pas suivi par le connexion tracker (et donc traités plus rapidement)
+iptables -A PREROUTING -i "$PRIMARY_IF" -p tcp -m multiport --dports 666,80,443 -m tcp --tcp-flags FIN,SYN,RST,ACK SYN -j CT --notrack
+# 2. en input-filter, les paquets TCP avec le flag SYN à destination des ports 666,80 ou 443 non suivi (UNTRACKED ou INVALID) et les fais suivre à SYNPROXY.
 # C'est à ce moment que synproxy répond le SYN-ACK à l'émeteur du SYN et créer une connexion à l'état ESTABLISHED dans conntrack, si et seulement si l'émetteur retourne un ACK valide.
 # Note : Les paquets avec un tcp-cookie invalides sont dropés, mais pas ceux avec des flags non-standard, il faudra les filtrer par ailleurs.
-sudo iptables -A INPUT -i eth0 -p tcp -m multiport --dports 22,80,443 -m tcp -m state --state INVALID,UNTRACKED -j SYNPROXY --sack-perm --timestamp --wscale 7 --mss 1460
+iptables -A INPUT -i "$PRIMARY_IF" -p tcp -m multiport --dports 666,80,443 -m tcp -m state --state INVALID,UNTRACKED -j SYNPROXY --sack-perm --timestamp --wscale 7 --mss 1460
 # 3. en input-filter, la règles SYNPROXY doit être suivi de celle-ci pour rejeter les paquets restant en état INVALID.
-sudo iptables -A INPUT -i eth0 -p tcp -m multiport --dports 22,80,443 -m tcp -m state --state INVALID -j DROP
+iptables -A INPUT -i "$PRIMARY_IF" -p tcp -m multiport --dports 666,80,443 -m tcp -m state --state INVALID -j DROP
 
-sudo iptables -A INPUT -m recent --rcheck --seconds 86400 --name portscan --mask 255.255.255.255 --rsource -j DROP
-sudo iptables -A INPUT -m recent --remove --name portscan --mask 255.255.255.255 --rsource
-sudo iptables -A INPUT -p tcp -m multiport --dports 25,445,1433,3389 -m recent --set --name portscan --mask 255.255.255.255 --rsource -j DROP
-sudo iptables -A PREROUTING -f -j DROP
-sudo iptables -A PREROUTING -i eth0 -p tcp -m tcp --syn -m multiport --dports 22,80,443 -m hashlimit --hashlimit-above 200/sec --hashlimit-burst 1000 --hashlimit-mode srcip --hashlimit-name syn --hashlimit-htable-size 2097152 --hashlimit-srcmask 24 -j DROP
-sudo iptables -A INPUT -i eth0 -p tcp -m connlimit --connlimit-above 100 -j REJECT
-sudo ufw logging off
-sudo ufw default allow incoming comment
-sudo ufw default allow outgoing comment
-sudo ufw enable
+iptables -A INPUT -m recent --rcheck --seconds 86400 --name portscan --mask 255.255.255.255 --rsource -j DROP
+iptables -A INPUT -m recent --remove --name portscan --mask 255.255.255.255 --rsource
+iptables -A INPUT -p tcp -m multiport --dports 25,445,1433,3389 -m recent --set --name portscan --mask 255.255.255.255 --rsource -j DROP
+iptables -A PREROUTING -f -j DROP
+iptables -A PREROUTING -i "$PRIMARY_IF" -p tcp -m tcp --syn -m multiport --dports 666,80,443 -m hashlimit --hashlimit-above 200/sec --hashlimit-burst 1000 --hashlimit-mode srcip --hashlimit-name syn --hashlimit-htable-size 2097152 --hashlimit-srcmask 24 -j DROP
+iptables -A INPUT -i "$PRIMARY_IF" -p tcp -m connlimit --connlimit-above 100 -j REJECT
+ufw logging off
+ufw default allow incoming comment
+ufw default allow outgoing comment
+ufw enable
 
-sudo ufw default deny incoming comment 'deny all incoming traffic'
-sudo ufw default deny outgoing comment 'deny all outgoing traffic'
+ufw default deny incoming comment 'deny all incoming traffic'
+ufw default deny outgoing comment 'deny all outgoing traffic'
 
-sudo ufw allow out 123/udp comment 'allow npd out'
-sudo ufw allow out 53 comment 'allow npd out'
-sudo ufw allow out http comment 'allow HTTP traffic'
-sudo ufw allow out https comment 'allow HTTPS traffic'
-sudo ufw allow out ftp comment 'allow FTP traffic'
-sudo ufw allow out sftp comment 'allow sftp backup'
-sudo ufw allow out ssh comment  'allow ssh backup'
-sudo ufw allow out 666/tcp comment 'allow ssh devil'
-sudo ufw allow out whois comment 'allow whois'
-sudo ufw allow out 68 comment 'allow the DHCP client to update'
-sudo ufw allow out mail comment 'allow the mail'
-sudo ufw allow out 465/tcp comment 'allow the mail'
-sudo ufw allow out 587/tcp comment 'allow the mail'
+ufw allow out 123/udp comment 'allow npd out'
+ufw allow out 53 comment 'allow npd out'
+ufw allow out http comment 'allow HTTP traffic'
+ufw allow out https comment 'allow HTTPS traffic'
+ufw allow out ftp comment 'allow FTP traffic'
+ufw allow out sftp comment 'allow sftp backup'
+ufw allow out ssh comment  'allow ssh backup'
+ufw allow out 666/tcp comment 'allow ssh devil'
+ufw allow out whois comment 'allow whois'
+ufw allow out 68 comment 'allow the DHCP client to update'
+ufw allow out mail comment 'allow the mail'
+ufw allow out 465/tcp comment 'allow the mail'
+ufw allow out 587/tcp comment 'allow the mail'
 
-sudo ufw allow http comment 'allow HTTP traffic'
-sudo ufw allow https comment 'allow HTTPS traffic'
-sudo ufw allow ftp comment 'allow FTP traffic'
-sudo ufw allow 123/udp comment 'allow npd'
-sudo ufw allow 666/tcp comment 'allow ssh devil'
-sudo iptables -A INPUT -j LOG --log-tcp-options --log-prefix "[IPTABLES] "
-sudo iptables -A FORWARD -j LOG --log-tcp-options --log-prefix "[IPTABLES] "
+ufw allow http comment 'allow HTTP traffic'
+ufw allow https comment 'allow HTTPS traffic'
+ufw allow ftp comment 'allow FTP traffic'
+ufw allow 123/udp comment 'allow npd'
+ufw allow 666/tcp comment 'allow ssh devil'
+iptables -A INPUT -j LOG --log-tcp-options --log-prefix "[IPTABLES] "
+iptables -A FORWARD -j LOG --log-tcp-options --log-prefix "[IPTABLES] "
 
-sudo ufw reload
+ufw reload
 
 
 # PSAD
-sudo apt install -y psad
-sudo cp --preserve /etc/psad/psad.conf /etc/psad/psad.conf.$(date +"%Y%m%d%H%M%S")
-sudo sed -i 's/EMAIL_ADDRESSES .*/EMAIL_ADDRESSES             YOUR_EMAIL;/g' /etc/psad/psad.conf
-sudo sed -i "s/HOSTNAME .*/HOSTNAME             $HOSTNAME;/g" /etc/psad/psad.conf
-sudo sed -i "s/ENABLE_AUTO_IDS .*/ENABLE_AUTO_IDS             Y;/g" /etc/psad/psad.conf
-sudo sed -i "s/ENABLE_AUTO_IDS_EMAILS .*/ENABLE_AUTO_IDS_EMAILS             Y;/g" /etc/psad/psad.conf
-sudo sed -i "s/IPTABLES_BLOCK_METHOD .*/IPTABLES_BLOCK_METHOD             Y;/g" /etc/psad/psad.conf
-#sudo sed -i "s/IMPORT_OLD_SCANS .*/IMPORT_OLD_SCANS             Y;/g" /etc/psad/psad.conf
-sudo sed -i "s/EXPECT_TCP_OPTIONS .*/EXPECT_TCP_OPTIONS             Y;/g" /etc/psad/psad.conf
-sudo sed -i "s/AUTO_IDS_DANGER_LEVEL .*/AUTO_IDS_DANGER_LEVEL       1;/g" /etc/psad/psad.conf
-sudo sed -i "s/EMAIL_ALERT_DANGER_LEVEL .*/EMAIL_ALERT_DANGER_LEVEL       3;/g" /etc/psad/psad.conf
-sudo sed -i "s/AUTO_BLOCK_TIMEOUT .*/AUTO_BLOCK_TIMEOUT       600000;/g" /etc/psad/psad.conf
-sudo sed -i "s/IPT_SYSLOG_FILE .*/IPT_SYSLOG_FILE        /var/log/syslog;/g" /etc/psad/psad.conf
+apt-get install -y psad
+cp --preserve /etc/psad/psad.conf /etc/psad/psad.conf.$(date +"%Y%m%d%H%M%S")
+sed -i 's/EMAIL_ADDRESSES .*/EMAIL_ADDRESSES             YOUR_EMAIL;/g' /etc/psad/psad.conf
+sed -i "s/HOSTNAME .*/HOSTNAME             $HOSTNAME;/g" /etc/psad/psad.conf
+sed -i "s/ENABLE_AUTO_IDS .*/ENABLE_AUTO_IDS             Y;/g" /etc/psad/psad.conf
+sed -i "s/ENABLE_AUTO_IDS_EMAILS .*/ENABLE_AUTO_IDS_EMAILS             Y;/g" /etc/psad/psad.conf
+sed -i "s/IPTABLES_BLOCK_METHOD .*/IPTABLES_BLOCK_METHOD             Y;/g" /etc/psad/psad.conf
+#sed -i "s/IMPORT_OLD_SCANS .*/IMPORT_OLD_SCANS             Y;/g" /etc/psad/psad.conf
+sed -i "s/EXPECT_TCP_OPTIONS .*/EXPECT_TCP_OPTIONS             Y;/g" /etc/psad/psad.conf
+sed -i "s/AUTO_IDS_DANGER_LEVEL .*/AUTO_IDS_DANGER_LEVEL       1;/g" /etc/psad/psad.conf
+sed -i "s/EMAIL_ALERT_DANGER_LEVEL .*/EMAIL_ALERT_DANGER_LEVEL       3;/g" /etc/psad/psad.conf
+sed -i "s/AUTO_BLOCK_TIMEOUT .*/AUTO_BLOCK_TIMEOUT       600000;/g" /etc/psad/psad.conf
+sed -i "s/IPT_SYSLOG_FILE .*/IPT_SYSLOG_FILE        /var/log/syslog;/g" /etc/psad/psad.conf
 
-sudo psad -R
-sudo psad --sig-update
-sudo psad -H
-sudo service psad start
+psad -R
+psad --sig-update
+psad -H
+service psad start
 
 ### FAIL2BAN
-sudo apt install -y fail2ban
-sudo cp jail.local /etc/fail2ban/
-sudo cp scan-mysql.conf /etc/fail2ban/filter.d/
-sudo cp phpmyadmin.conf /etc/fail2ban/filter.d/
-sudo service fail2ban start
-sudo fail2ban-client start
-sudo fail2ban-client reload
+apt-get install -y fail2ban
+cp jail.local /etc/fail2ban/
+cp scan-mysql.conf /etc/fail2ban/filter.d/
+cp phpmyadmin.conf /etc/fail2ban/filter.d/
+service fail2ban start
+fail2ban-client start
+fail2ban-client reload
 
 ### Lynis
-sudo apt install -y git host
-sudo rm -rf /usr/local/lynis
-cd /usr/local/
-sudo git clone https://github.com/CISOfy/lynis
-sudo mkdir -p /var/www/html/lynis
+apt-get install -y git host
+rm -rf /usr/local/lynis
+git clone https://github.com/CISOfy/lynis /usr/local/lynis
+mkdir -p /var/www/html/lynis
 cat <<EOT >> /etc/apache2/sites-enabled/000-default.conf
 
 <Directory "/var/www/html">
@@ -228,7 +226,7 @@ cat <<EOT >> /etc/apache2/sites-enabled/000-default.conf
 </Directory>
 
 EOT
-sudo service apache2 restart
+service apache2 restart
 cat <<EOT > /var/www/html/lynis/.htaccess
 AuthType Basic
 AuthName "Lynis"
@@ -239,22 +237,22 @@ echo 'lynis:$apr1$AoXXpNJ2$E82n/O0IU7XY0vP/FaMCK0' > /var/www/html/lynis/.htpass
 lynis audit system | ansi2html > /var/www/html/lynis/index.html
 
 ### Mail
-sudo apt-get install -y mailutils postfix
-sudo sed -i "s/inet_interfaces.*/inet_interfaces = loopback-only/g" /etc/postfix/main.cf
-sudo sed -i "s/smtpd_banner.*/smtpd_banner = $myhostname ESMTP/g" /etc/postfix/main.cf
-sudo systemctl restart postfix
+apt-get install -y mailutils postfix
+sed -i "s/inet_interfaces.*/inet_interfaces = loopback-only/g" /etc/postfix/main.cf
+sed -i "s/smtpd_banner.*/smtpd_banner = $myhostname ESMTP/g" /etc/postfix/main.cf
+systemctl restart postfix
 echo "This is the body of the email" | mail -s "This is the subject line" YOUR_EMAIL
 
 ### Changer la sécurité des login en 027
-sudo sed -i "s/UMASK.*/UMASK           027/g" /etc/login.defs
+sed -i "s/UMASK.*/UMASK           027/g" /etc/login.defs
 
 ### Purges les packets non utilisés
-sudo apt purge `dpkg --list | grep ^rc | awk '{ print $2; }'`
-dpkg --list | grep "^rc" | cut -d " " -f 3 | xargs sudo dpkg --purge
+apt-get purge `dpkg --list | grep ^rc | awk '{ print $2; }'`
+dpkg --list | grep "^rc" | cut -d " " -f 3 | xargs dpkg --purge
 
 ### Vérificateur de package
-sudo apt-get install -y debsums
-sudo apt-get install --reinstall $(dpkg-query -S $(sudo debsums -c 2>&1 | sed -e "s/.*file \(.*\) (.*/\1/g") | cut -d: -f1 | sort -u)
+apt-get install -y debsums
+apt-get install --reinstall $(dpkg-query -S $(debsums -c 2>&1 | sed -e "s/.*file \(.*\) (.*/\1/g") | cut -d: -f1 | sort -u)
 
 ## Add a legal banner to /etc/issue, to warn unauthorized users [BANN-7126]
 echo "Serveur managed by Folken with love, les indesirables ne sont pas les bienvenus ici." > /etc/issue
@@ -263,26 +261,26 @@ echo "Serveur managed by Folken with love, les indesirables ne sont pas les bien
 echo "Serveur managed by Folken with love, les indesirables ne sont pas les bienvenus ici." > /etc/issue.net
 
 ### Surveiller les users
-sudo apt-get install -y acct
-sudo touch /var/log/pacct
-sudo accton /var/log/pacct
-sudo /etc/init.d/acct start
+apt-get install -y acct
+touch /var/log/pacct
+accton /var/log/pacct
+/etc/init.d/acct start
 
 ## Enable sysstat to collect accounting (no results) [ACCT-9626]
-sudo apt-get install -y sysstat
-sudo sed -i 's/ENABLED="false"/ENABLED="true"/' /etc/default/sysstat
+apt-get install -y sysstat
+sed -i 's/ENABLED="false"/ENABLED="true"/' /etc/default/sysstat
 
 ### AIDE for check integrity config file
-sudo apt-get install -y aide
-sudo aide.wrapper --init
+apt-get install -y aide
+aide.wrapper --init
 ## pour tester l'integrité ensuite
-sudo aide.wrapper --check
+aide.wrapper --check
 ## pour accepter des changements
-sudo aide.wrapper --update
+aide.wrapper --update
 
 ### Rkhunter anti rootkit
-sudo apt-get install -y rkhunter
-sudo sed -i "s/#\?MAIL-ON-WARNING.*/MAIL-ON-WARNING=YOUR_EMAIL/g" /etc/rkhunter.conf
-sudo service ssh restart
-sudo rkhunter --propupdate
+apt-get install -y rkhunter
+sed -i "s/#\?MAIL-ON-WARNING.*/MAIL-ON-WARNING=YOUR_EMAIL/g" /etc/rkhunter.conf
+service ssh restart
+rkhunter --propupdate
 rkhunter -c --sk --display-logfile
