@@ -1,4 +1,11 @@
 #!/bin/bash
+set -euo pipefail
+
+export DEBIAN_FRONTEND=noninteractive
+
+[[ "$(id -u)" -ne 0 ]] && { echo "ERROR: run as root" >&2; exit 1; }
+
+PRIMARY_IF=$(ip route show default | awk '/default/ { print $5; exit }')
 
 ### Avoir les bons repos Bookworm
 cat << EOT > /etc/apt/sources.list
