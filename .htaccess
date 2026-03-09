@@ -117,16 +117,11 @@ RewriteCond %{QUERY_STRING} [a-zA-Z0-9_]=/([a-z0-9_.]//?)+ [NC]
 RewriteRule .* - [F]
 
 # Protections diverses (XSS, clickjacking et MIME-Type sniffing)
-#<ifModule mod_headers.c>
-#Header set X-XSS-Protection "1; mode=block"
-#Header always append X-Frame-Options SAMEORIGIN
-#Header set X-Content-Type-Options: "nosniff”
-#</ifModule>
-
-# Enable fonts loading from cross-origin recourse
-Header add Access-Control-Allow-Origin "*"
-
-# Disable browsers from being able to validate files, to improve speed
-Header unset ETag
-FileETag None
-# End of Disable browsers from being able to validate files
+<ifModule mod_headers.c>
+Header set X-XSS-Protection “1; mode=block”
+Header always append X-Frame-Options SAMEORIGIN
+Header set X-Content-Type-Options “nosniff”
+Header set Referrer-Policy “strict-origin-when-cross-origin”
+Header set Permissions-Policy “camera=(), microphone=(), geolocation=()”
+Header set X-Permitted-Cross-Domain-Policies “none”
+</ifModule>
