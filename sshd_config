@@ -56,3 +56,8 @@ ClientAliveCountMax 2
 MaxAuthTries 3
 MaxSessions 2
 Banner /etc/issue
+
+PasswordAuthentication no
+PubkeyAuthentication yes
+PermitRootLogin prohibit-password
+LoginGraceTime 60
