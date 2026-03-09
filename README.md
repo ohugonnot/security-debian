@@ -81,6 +81,11 @@ sed -i 's/YOUR_EMAIL/votre@email.com/g' security.sh jail.local
 
 ---
 
+## Avant de lancer le script
+
+> **Attention :** Le port SSH passe à 666. Vérifiez que votre firewall
+> autorise ce port avant de couper votre session en cours.
+
 ## Avertissement
 
 Ce script est fourni à titre éducatif. Adaptez-le à votre environnement avant de l'exécuter en production (interface réseau, ports, chemins, etc.).
