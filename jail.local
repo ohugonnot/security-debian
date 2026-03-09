@@ -3,7 +3,7 @@ before = paths-debian.conf
 
 [DEFAULT]
 ignoreip = 127.0.0.1/8
-destemail = folken70@hotmail.com
+destemail = YOUR_EMAIL
 sender = root@localhost
 
 [phpmyadmin]
@@ -34,11 +34,6 @@ enabled = true
 port    = 666
 logpath = %(sshd_log)s
 
-[sshd-ddos]
-enabled = true
-port    = 666
-logpath = %(sshd_log)s
-
 [apache-auth]
 enabled = true
 port     = http,https
@@ -55,6 +50,7 @@ maxretry = 1
 enabled = true
 port     = http,https
 logpath  = %(apache_error_log)s
+
 [apache-overflows]
 port     = http,https
 logpath  = %(apache_error_log)s
@@ -94,6 +90,7 @@ maxretry = 1
 [nginx-http-auth]
 port    = http,https
 logpath = %(nginx_error_log)s
+
 [nginx-limit-req]
 port    = http,https
 logpath = %(nginx_error_log)s
@@ -110,6 +107,7 @@ logpath = %(nginx_access_log)s
           %(apache_access_log)s
 
 [webmin-auth]
+enabled = false
 port    = 10000
 logpath = %(syslog_authpriv)s
 backend = %(syslog_backend)s
@@ -170,14 +168,3 @@ logpath  = /var/log/fail2ban.log
 banaction = %(banaction_allports)s
 bantime  = 604800  ; 1 week
 findtime = 86400   ; 1 day
-
-[pass2allow-ftp]
-port         = ftp,ftp-data,ftps,ftps-data
-knocking_url = /knocking/
-filter       = apache-pass[knocking_url="%(knocking_url)s"]
-logpath      = %(apache_access_log)s
-blocktype    = RETURN
-returntype   = DROP
-bantime      = 3600
-maxretry     = 1
-findtime     = 1
